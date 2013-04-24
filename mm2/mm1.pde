@@ -121,7 +121,7 @@ void showCurOrgs() {
     for (int i = 0; i < orgList.size(); i++) {
       Org o = (Org) orgList.get(i); 
       if (o.isCurrent) {
-        curCityName = o.currentCity; 
+        curCityName = o.cityName; 
         count ++; 
         fill (255); 
         text (o.name, width-sidebar.w + 10, 40 + (30 * count));   

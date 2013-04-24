@@ -8,8 +8,7 @@ class Org {
   String name; 
   String description; 
   String fileName; 
-  //String cityName;
-  String currentCity = "";
+  String cityName;
   
   Org() {
     cities = new ArrayList();
@@ -23,30 +22,28 @@ class Org {
 
   void fromCSV(String[] input) {
     name = input[0]; 
-    
-    description = input[11];
+    cityName = input[1];
+    description = input[10];
     /*
-    if (input[11].length() == 0) {
+    if (input[10].length() == 0) {
       description = "description"; 
     } else {
-      description = input[11];
+      description = input[10];
     }
       */
-    //fileName = input[10];
+    //fileName = input[9];
 
     //if there is not another city - todo clean
     City thisCity = new City(); 
-    thisCity.name = input[1]; 
-    thisCity.lat = float(input[4]); 
-    thisCity.lng = float(input[3]); 
+    thisCity.lat = float(input[3]); 
+    thisCity.lng = float(input[2]); 
     thisCity.setCoords(); 
     cities.add (thisCity); 
    
     if (input[5] != "") {
      City thisCity2 = new City(); 
-     thisCity2.name = input[6];
-     thisCity2.lat = float(input[8]); 
-     thisCity2.lng = float(input[7]); 
+     thisCity2.lat = float(input[7]); 
+     thisCity2.lng = float(input[6]); 
      thisCity2.setCoords(); 
      cities.add (thisCity2); 
      }
@@ -73,21 +70,17 @@ class Org {
   boolean isOverACity() {
     for (int i = 0; i < cities.size(); i++) {
       City c = (City) cities.get(i);
-      if (c.isInside (mouseX, mouseY)) {
-        currentCity = c.name; 
+      if (c.isInside (mouseX, mouseY)) 
         return true;
-      }
     }
-   return false;
+    return false;
   }
-
 }
 
 class City {
   float lat, lng; 
   PVector location; 
   int   area = 5; 
-  String name; 
 
   void setCoords() {   
     location = mercatorMap.getScreenLocation(new PVector(lat, lng));
