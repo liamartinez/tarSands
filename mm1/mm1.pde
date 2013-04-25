@@ -7,11 +7,18 @@ PImage movementMap;
 PImage tsmmlogo; 
 PImage tswhatis;
 int curCity, lastCity; 
+int cur; 
 
 MercatorMap mercatorMap;
 Sidebar sidebar; 
+VScrollbar Vslider;
+int regionTotalNum;
 
-ArrayList orgList;
+int numRegions = 5; 
+Region [] regions = new Region [numRegions];
+String[] regionNames = {
+  "Western Canada", "Eastern Canada", "Western USA", "Eastern USA", "Europe"
+}; 
 
 int offset = 200; //todo
 
@@ -28,9 +35,14 @@ color[] colors = {
 color TSblack = #151515; 
 color TSSorange = #F58434;
 
+String currentRegion; 
+
 void setup() {
   frameRate (40); 
-  orgList = new ArrayList(); 
+  for (int i = 0; i< regions.length;i++) {
+    regions[i] = new Region();
+    regions[i].name = regionNames[i];
+  } 
   movementMap   = loadImage("map.png");
   tsmmlogo = loadImage ("tsmmlogo.png"); 
   tswhatis = loadImage ("tswhatis.png"); 
@@ -40,11 +52,19 @@ void setup() {
   //last one, second one, first one, third one
   sidebar = new Sidebar(); 
 
-  loadCSV("MovementMapData - Sheet1.csv");
+  // Scrollbar/slider colors
+  color scrEdgdeCol = color(0, 0, 0);
+  color scrBgCol    = color(100, 100, 100);
+  color sliderColor = color(0, 150, 200);
+  color scrHoverCol = color(100, 200, 200);
+  color scrPressCol = color(100, 255, 255);
+  Vslider = new VScrollbar(width - 15, 0, 15, height, 2, scrEdgdeCol, scrBgCol, sliderColor, scrHoverCol, scrPressCol);
+  Vslider.setValue (0); 
+  loadCSV("MovementMapData - Sheet1 (5).csv");
 }
 
-void draw() {
 
+void draw() {
   //map
   pushMatrix();
   translate (-offset, 0); 
@@ -55,9 +75,11 @@ void draw() {
   image (tsmmlogo, offset+150, height - 50); 
   image (tswhatis, offset + 470, height + 40); 
   popMatrix(); 
-  for (int i = 0; i < orgList.size(); i++) {
-    Org o = (Org) orgList.get(i); 
-    o.display();
+
+  for (int i = 0; i < regions.length; i++) {
+    for (int j = 0; j < regions[i].orgList.size(); j++) {
+      regions[i].displayCities();
+    }
   }
 
   popMatrix();
@@ -65,84 +87,105 @@ void draw() {
   //sidebar
   markCurrent();
   sidebar.display(); 
-  showCurOrgs();
+  pushMatrix(); 
+  float newPos= map (Vslider.value(), 0, 1, 0, -(regionTotalNum*30-height)); 
+  regions[cur].setOffset(newPos);
+  translate (0, newPos); 
+  showCurRegion();
+  popMatrix(); 
+
+  Vslider.display(); 
+  Vslider.update();
 }
 
-boolean isOverAnOrg() {
-  for (int i = 0; i < orgList.size(); i++) {
-    Org o = (Org) orgList.get(i); 
-    if (o.isOverACity()) {
-      return true;
+void mousePressed() {
+    for (int i = 0; i < regions.length; i++) {
+      regions[i].checkClicks();
     }
-  }
+}
+
+
+boolean isOverAnOrg() {
+  for (int j = 0; j < regions.length; j++) {
+      if (regions[j].isOverAnOrg()) {
+        return true;
+      }
+    }
   return false;
 }
 
+
 void markCurrent() {
-  if (isOverAnOrg()) {
-    for (int i = 0; i < orgList.size(); i++) {
-      Org o = (Org) orgList.get(i); 
-      if (o.isOverACity()) {
-        o.isCurrent = true;
-      } 
-      else {
-        o.isCurrent = false;
-      }
+    if (isOverAnOrg()) {
+  for (int i = 0; i < regions.length; i++) {
+    if (regions[i].isOverAnOrg()) {
+      currentRegion = regions[i].name;      
+      regions[i].setIsCurrent(true);
+      cur = i; 
+    } 
+    else {
+      regions[i].setIsCurrent(false);
+    }
+  } 
+
+   }
+}
+
+
+void mouseScrolled() {
+  println (p.mouseScroll); 
+}
+
+
+/*
+  void showCurOrgs() {
+ int count = 0; 
+ String curCityName = ""; 
+ for (int i = 0; i < orgList.size(); i++) {
+ Org o = (Org) orgList.get(i); 
+ if (o.isCurrent) {
+ curCityName = o.city; 
+ count ++; 
+ fill (255); 
+ text (o.name, width-sidebar.w + 10, 40 + (30 * count));   
+ 
+ strokeWeight (3);
+ stroke (TSSorange);  
+ line (width-sidebar.w, 40, width - 10, 40);
+ } 
+ else {
+ }
+ }
+ text (curCityName, width-sidebar.w + 10, 30);
+ }
+ */
+
+void showCurRegion() {
+  for (int i = 0; i < regions.length; i++) {
+    if (regions[i].isCurrent) {
+      regions[i].displayOrgs();
+      regionTotalNum = regions[i].orgList.size();
     }
   }
 }
 
-  /*
-void showCurOrgs() {
-   int count = 0; 
-   String curCityName = ""; 
-   for (int i = 0; i < orgList.size(); i++) {
-   Org o = (Org) orgList.get(i); 
-   if (o.isOverACity()) {
-   curCityName = o.cityName; 
-   count ++; 
-   fill (255); 
-   text (o.name, width-sidebar.w + 10, 40 + (30 * count));   
-   
-   strokeWeight (3);
-   stroke (TSSorange);  
-   line (width-sidebar.w, 40, width - 10, 40);
-   } 
-   else {
-   }
-   }
-   text (curCityName, width-sidebar.w + 10, 30);
-   }
-   */
 
-  void showCurOrgs() {
-    int count = 0; 
-    String curCityName = ""; 
-    for (int i = 0; i < orgList.size(); i++) {
-      Org o = (Org) orgList.get(i); 
-      if (o.isCurrent) {
-        curCityName = o.currentCity; 
-        count ++; 
-        fill (255); 
-        text (o.name, width-sidebar.w + 10, 40 + (30 * count));   
-
-        strokeWeight (3);
-        stroke (TSSorange);  
-        line (width-sidebar.w, 40, width - 10, 40);
-      } 
-      else {
+void loadCSV(String fileName) {
+  String [] file = loadStrings(fileName); 
+  //println ("file length: " + file.length); 
+  for (int i = 1; i < file.length; i++) {
+    Org o = new Org(); 
+    o.fromCSV(file[i].split(","));
+    for (int j = 0; j < regions.length; j++) {
+      if (o.region.contains(regions[j].name)) {
+        //println ("this city: " + o.city + " is in region " + o.region); 
+        regions[j].orgList.add (o);
+        //println (regions[j].name +  " is this size " + regions[j].orgList.size());
       }
     }
-    text (curCityName, width-sidebar.w + 10, 30);
   }
-
-
-  void loadCSV(String fileName) {
-    String [] file = loadStrings(fileName); 
-    for (int i = 1; i < file.length; i++) {
-      Org o = new Org(); 
-      o.fromCSV(file[i].split(","));
-      orgList.add (o);
-    }
+  for (int i = 0; i < regions.length; i++) {
+    //println (regions[i].name + " " + regions[i].orgList.size());
   }
+}
 

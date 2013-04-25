@@ -1,93 +1,79 @@
+
 class Org {
 
-  ArrayList cities; 
-  color myColor; 
   float circleS; 
   float rate; 
   boolean isCurrent; 
+  int   area = 5; 
+
+  color myColor; 
   String name; 
   String description; 
   String fileName; 
-  //String cityName;
-  String currentCity = "";
+  float lat, lng; 
+  PVector location; 
+  String city; 
+  String region; 
   
+  int rectHeight = 30;
+  int rectWidth = offset + 100;
+  int yPos; 
+  
+  boolean isDetail = false;
+
   Org() {
-    cities = new ArrayList();
     myColor = colors[int(random(colors.length))]; 
     circleS = int(random(5, 15)); 
     rate = random (circleS, circleS+20); 
-    isCurrent = false; 
+    isCurrent = false;
   }
-
-
 
   void fromCSV(String[] input) {
     name = input[0]; 
-    
-    description = input[11];
-    /*
-    if (input[11].length() == 0) {
-      description = "description"; 
-    } else {
-      description = input[11];
-    }
-      */
-    //fileName = input[10];
+    //description = input[12];
 
-    //if there is not another city - todo clean
-    City thisCity = new City(); 
-    thisCity.name = input[1]; 
-    thisCity.lat = float(input[4]); 
-    thisCity.lng = float(input[3]); 
-    thisCity.setCoords(); 
-    cities.add (thisCity); 
-   
-    if (input[5] != "") {
-     City thisCity2 = new City(); 
-     thisCity2.name = input[6];
-     thisCity2.lat = float(input[8]); 
-     thisCity2.lng = float(input[7]); 
-     thisCity2.setCoords(); 
-     cities.add (thisCity2); 
-     }
-     
+    city = input[1]; 
+    region = input[3]; 
+    lat = float(input[5]); 
+    lng = float(input[4]); 
+    setCoords();
   } 
 
-  void display() {
-
-    for (int i = 0; i < cities.size(); i++) {
-      City c = (City) cities.get(i);
-      if (isOverACity()) {
-        fill (255);
-      } 
-      else {
-        fill (myColor, 175);
-      }
-      noStroke(); 
-      circleS = circleS + cos( frameCount/ rate); //for individual pulsing
-      ellipse (c.location.x, c.location.y, circleS, circleS);
-      ellipse (c.location.x, c.location.y, 5, 5);
+  void display(int circleSize) {
+    if (isCurrent) {
+      fill (255);
+    } 
+    else {
+      fill (myColor, 175);
     }
+    noStroke(); 
+    //circleSize = circleSize + cos( frameCount/ rate); //for individual pulsing
+    ellipse (location.x, location.y, circleSize, circleSize);
+    ellipse (location.x, location.y, 5, 5);
+  }
+  
+    
+  void drawRect(int yPos_) {
+      yPos = yPos_; 
+      fill (myColor); 
+      if (isDetail) {
+        rectHeight = 60; 
+      } else {
+        rectHeight = 30;
+      }
+      rect (width-rectWidth, yPos, rectWidth, rectHeight); 
+      fill (255); 
+      text (name, width-sidebar.w + 10, 10 + yPos);
+  }
+  
+  boolean clickedRect (float offset_) {
+    float clickOffset = offset_; 
+    if (mousePressed && mouseX > (width-rectWidth)  && mouseX < (width-rectWidth + rectWidth)  && mouseY > yPos + clickOffset && mouseY < (yPos + rectHeight)+ clickOffset) {
+      return true; 
+    } 
+    return false;
   }
 
-  boolean isOverACity() {
-    for (int i = 0; i < cities.size(); i++) {
-      City c = (City) cities.get(i);
-      if (c.isInside (mouseX, mouseY)) {
-        currentCity = c.name; 
-        return true;
-      }
-    }
-   return false;
-  }
-
-}
-
-class City {
-  float lat, lng; 
-  PVector location; 
-  int   area = 5; 
-  String name; 
 
   void setCoords() {   
     location = mercatorMap.getScreenLocation(new PVector(lat, lng));
@@ -102,5 +88,4 @@ class City {
     }
   }
 }
-
 

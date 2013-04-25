@@ -7,11 +7,18 @@ PImage movementMap;
 PImage tsmmlogo; 
 PImage tswhatis;
 int curCity, lastCity; 
+int cur; 
 
 MercatorMap mercatorMap;
 Sidebar sidebar; 
+VScrollbar Vslider;
+int regionTotalNum;
 
-ArrayList orgList;
+int numRegions = 5; 
+Region [] regions = new Region [numRegions];
+String[] regionNames = {
+  "Western Canada", "Eastern Canada", "Western USA", "Eastern USA", "Europe"
+}; 
 
 int offset = 200; //todo
 
@@ -28,9 +35,14 @@ color[] colors = {
 color TSblack = #151515; 
 color TSSorange = #F58434;
 
+String currentRegion; 
+
 void setup() {
   frameRate (40); 
-  orgList = new ArrayList(); 
+  for (int i = 0; i< regions.length;i++) {
+    regions[i] = new Region();
+    regions[i].name = regionNames[i];
+  } 
   movementMap   = loadImage("map.png");
   tsmmlogo = loadImage ("tsmmlogo.png"); 
   tswhatis = loadImage ("tswhatis.png"); 
@@ -40,11 +52,19 @@ void setup() {
   //last one, second one, first one, third one
   sidebar = new Sidebar(); 
 
-  loadCSV("MovementMapData - Sheet1.csv");
+  // Scrollbar/slider colors
+  color scrEdgdeCol = color(0, 0, 0);
+  color scrBgCol    = color(100, 100, 100);
+  color sliderColor = color(0, 150, 200);
+  color scrHoverCol = color(100, 200, 200);
+  color scrPressCol = color(100, 255, 255);
+  Vslider = new VScrollbar(width - 15, 0, 15, height, 2, scrEdgdeCol, scrBgCol, sliderColor, scrHoverCol, scrPressCol);
+  Vslider.setValue (0); 
+  loadCSV("MovementMapData - Sheet1 (5).csv");
 }
 
-void draw() {
 
+void draw() {
   //map
   pushMatrix();
   translate (-offset, 0); 
@@ -55,9 +75,11 @@ void draw() {
   image (tsmmlogo, offset+150, height - 50); 
   image (tswhatis, offset + 470, height + 40); 
   popMatrix(); 
-  for (int i = 0; i < orgList.size(); i++) {
-    Org o = (Org) orgList.get(i); 
-    o.display();
+
+  for (int i = 0; i < regions.length; i++) {
+    for (int j = 0; j < regions[i].orgList.size(); j++) {
+      regions[i].displayCities();
+    }
   }
 
   popMatrix();
@@ -65,86 +87,107 @@ void draw() {
   //sidebar
   markCurrent();
   sidebar.display(); 
-  showCurOrgs();
+  pushMatrix(); 
+  float newPos= map (Vslider.value(), 0, 1, 0, -(regionTotalNum*30-height)); 
+  regions[cur].setOffset(newPos);
+  translate (0, newPos); 
+  showCurRegion();
+  popMatrix(); 
+
+  Vslider.display(); 
+  Vslider.update();
 }
 
-boolean isOverAnOrg() {
-  for (int i = 0; i < orgList.size(); i++) {
-    Org o = (Org) orgList.get(i); 
-    if (o.isOverACity()) {
-      return true;
+void mousePressed() {
+    for (int i = 0; i < regions.length; i++) {
+      regions[i].checkClicks();
     }
-  }
+}
+
+
+boolean isOverAnOrg() {
+  for (int j = 0; j < regions.length; j++) {
+      if (regions[j].isOverAnOrg()) {
+        return true;
+      }
+    }
   return false;
 }
 
+
 void markCurrent() {
-  if (isOverAnOrg()) {
-    for (int i = 0; i < orgList.size(); i++) {
-      Org o = (Org) orgList.get(i); 
-      if (o.isOverACity()) {
-        o.isCurrent = true;
-      } 
-      else {
-        o.isCurrent = false;
-      }
+    if (isOverAnOrg()) {
+  for (int i = 0; i < regions.length; i++) {
+    if (regions[i].isOverAnOrg()) {
+      currentRegion = regions[i].name;      
+      regions[i].setIsCurrent(true);
+      cur = i; 
+    } 
+    else {
+      regions[i].setIsCurrent(false);
+    }
+  } 
+
+   }
+}
+
+
+void mouseScrolled() {
+  println (p.mouseScroll); 
+}
+
+
+/*
+  void showCurOrgs() {
+ int count = 0; 
+ String curCityName = ""; 
+ for (int i = 0; i < orgList.size(); i++) {
+ Org o = (Org) orgList.get(i); 
+ if (o.isCurrent) {
+ curCityName = o.city; 
+ count ++; 
+ fill (255); 
+ text (o.name, width-sidebar.w + 10, 40 + (30 * count));   
+ 
+ strokeWeight (3);
+ stroke (TSSorange);  
+ line (width-sidebar.w, 40, width - 10, 40);
+ } 
+ else {
+ }
+ }
+ text (curCityName, width-sidebar.w + 10, 30);
+ }
+ */
+
+void showCurRegion() {
+  for (int i = 0; i < regions.length; i++) {
+    if (regions[i].isCurrent) {
+      regions[i].displayOrgs();
+      regionTotalNum = regions[i].orgList.size();
     }
   }
 }
 
-  /*
-void showCurOrgs() {
-   int count = 0; 
-   String curCityName = ""; 
-   for (int i = 0; i < orgList.size(); i++) {
-   Org o = (Org) orgList.get(i); 
-   if (o.isOverACity()) {
-   curCityName = o.cityName; 
-   count ++; 
-   fill (255); 
-   text (o.name, width-sidebar.w + 10, 40 + (30 * count));   
-   
-   strokeWeight (3);
-   stroke (TSSorange);  
-   line (width-sidebar.w, 40, width - 10, 40);
-   } 
-   else {
-   }
-   }
-   text (curCityName, width-sidebar.w + 10, 30);
-   }
-   */
 
-  void showCurOrgs() {
-    int count = 0; 
-    String curCityName = ""; 
-    for (int i = 0; i < orgList.size(); i++) {
-      Org o = (Org) orgList.get(i); 
-      if (o.isCurrent) {
-        curCityName = o.cityName; 
-        count ++; 
-        fill (255); 
-        text (o.name, width-sidebar.w + 10, 40 + (30 * count));   
-
-        strokeWeight (3);
-        stroke (TSSorange);  
-        line (width-sidebar.w, 40, width - 10, 40);
-      } 
-      else {
+void loadCSV(String fileName) {
+  String [] file = loadStrings(fileName); 
+  //println ("file length: " + file.length); 
+  for (int i = 1; i < file.length; i++) {
+    Org o = new Org(); 
+    o.fromCSV(file[i].split(","));
+    for (int j = 0; j < regions.length; j++) {
+      if (o.region.contains(regions[j].name)) {
+        //println ("this city: " + o.city + " is in region " + o.region); 
+        regions[j].orgList.add (o);
+        //println (regions[j].name +  " is this size " + regions[j].orgList.size());
       }
     }
-    text (curCityName, width-sidebar.w + 10, 30);
   }
-
-
-  void loadCSV(String fileName) {
-    String [] file = loadStrings(fileName); 
-    for (int i = 1; i < file.length; i++) {
-      Org o = new Org(); 
-      o.fromCSV(file[i].split(","));
-      orgList.add (o);
-    }
+  for (int i = 0; i < regions.length; i++) {
+    //println (regions[i].name + " " + regions[i].orgList.size());
   }
+}
 
 /**
  * Utility class to convert between geo-locations and Cartesian screen coordinates.
@@ -237,89 +280,82 @@ public class MercatorMap {
   }
 }
 
+
 class Org {
 
-  ArrayList cities; 
-  color myColor; 
   float circleS; 
   float rate; 
   boolean isCurrent; 
+  int   area = 5; 
+
+  color myColor; 
   String name; 
   String description; 
   String fileName; 
-  String cityName;
+  float lat, lng; 
+  PVector location; 
+  String city; 
+  String region; 
   
+  int rectHeight = 30;
+  int rectWidth = offset + 100;
+  int yPos; 
+  
+  boolean isDetail = false;
+
   Org() {
-    cities = new ArrayList();
     myColor = colors[int(random(colors.length))]; 
     circleS = int(random(5, 15)); 
     rate = random (circleS, circleS+20); 
-    isCurrent = false; 
+    isCurrent = false;
   }
-
-
 
   void fromCSV(String[] input) {
     name = input[0]; 
-    cityName = input[1];
-    description = input[10];
-    /*
-    if (input[10].length() == 0) {
-      description = "description"; 
-    } else {
-      description = input[10];
-    }
-      */
-    //fileName = input[9];
+    //description = input[12];
 
-    //if there is not another city - todo clean
-    City thisCity = new City(); 
-    thisCity.lat = float(input[3]); 
-    thisCity.lng = float(input[2]); 
-    thisCity.setCoords(); 
-    cities.add (thisCity); 
-
-    /*
-    if (input[5] != null) {
-     City thisCity2 = new City(); 
-     thisCity2.lat = float(input[7]); 
-     thisCity2.lng = float(input[6]); 
-     cities.add (thisCity2); 
-     }
-     */
+    city = input[1]; 
+    region = input[3]; 
+    lat = float(input[5]); 
+    lng = float(input[4]); 
+    setCoords();
   } 
 
-  void display() {
-
-    for (int i = 0; i < cities.size(); i++) {
-      City c = (City) cities.get(i);
-      if (isOverACity()) {
-        fill (255);
-      } 
-      else {
-        fill (myColor, 175);
-      }
-      noStroke(); 
-      circleS = circleS + cos( frameCount/ rate);
-      ellipse (c.location.x, c.location.y, circleS, circleS);
-      ellipse (c.location.x, c.location.y, 5, 5);
+  void display(int circleSize) {
+    if (isCurrent) {
+      fill (255);
+    } 
+    else {
+      fill (myColor, 175);
     }
+    noStroke(); 
+    //circleSize = circleSize + cos( frameCount/ rate); //for individual pulsing
+    ellipse (location.x, location.y, circleSize, circleSize);
+    ellipse (location.x, location.y, 5, 5);
   }
-
-  boolean isOverACity() {
-    for (int i = 0; i < cities.size(); i++) {
-      City c = (City) cities.get(i);
-      if (c.isInside (mouseX, mouseY)) 
-        return true;
-    }
+  
+    
+  void drawRect(int yPos_) {
+      yPos = yPos_; 
+      fill (myColor); 
+      if (isDetail) {
+        rectHeight = 60; 
+      } else {
+        rectHeight = 30;
+      }
+      rect (width-rectWidth, yPos, rectWidth, rectHeight); 
+      fill (255); 
+      text (name, width-sidebar.w + 10, 10 + yPos);
+  }
+  
+  boolean clickedRect (float offset_) {
+    float clickOffset = offset_; 
+    if (mousePressed && mouseX > (width-rectWidth)  && mouseX < (width-rectWidth + rectWidth)  && mouseY > yPos + clickOffset && mouseY < (yPos + rectHeight)+ clickOffset) {
+      return true; 
+    } 
     return false;
   }
-}
 
-class City {
-  float lat, lng; 
-  PVector location; 
-  int   area = 10; 
 
   void setCoords() {   
     location = mercatorMap.getScreenLocation(new PVector(lat, lng));
@@ -335,7 +371,165 @@ class City {
   }
 }
 
+class Region {
+  ArrayList orgList; 
+  String name;
+  boolean isCurrent; 
 
+  int totalHeight;
+  float offset; 
+
+  Region() {
+    orgList = new ArrayList();
+  } 
+
+  boolean isOverAnOrg() {
+    for (int i = 0; i < orgList.size(); i++) {
+      Org o = (Org) orgList.get(i); 
+      if (o.isInside (mouseX, mouseY)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void displayCities() {
+    for (int i = orgList.size()-1; i > -1; i--) {
+      Org o = (Org) orgList.get(i); 
+      o.display( 5 * i);
+    }
+  }
+
+  void displayOrgs() {       
+    for (int i = 0; i < orgList.size(); i++) {
+      Org o = (Org) orgList.get(i); 
+      if (i == 0) {
+        totalHeight = 0;
+      } 
+      else {
+        Org u  = (Org) orgList.get(i-1); 
+        totalHeight += u.rectHeight;
+      } 
+      o.drawRect(totalHeight);
+    }
+  }
+
+  void checkClicks() {
+    for (int i = 0; i < orgList.size(); i++) {
+      Org o = (Org) orgList.get(i); 
+      o.isDetail = false;
+      if (o.clickedRect(offset)) {
+        o.isDetail = true;
+      }
+    }
+  }
+
+  void setOffset(float offset_) {
+    offset = offset_;
+  }
+
+  void setIsCurrent(boolean is) {
+    isCurrent = is; 
+    for (int i = 0; i < orgList.size(); i++) {
+      Org o = (Org) orgList.get(i); 
+      o.isDetail = false;
+    }
+  }
+}
+
+class VScrollbar
+
+//from: http://forum.processing.org/topic/vertical-scrollbar
+//slightly modified to work with js
+
+{
+  int barWidth, barHeight; // width and height of bar. NOTE: barWidth also used as slider button height.
+  int Xpos, Ypos;          // upper-left position of bar
+  float Spos, newSpos;     // y (upper) position of slider
+  int SposMin, SposMax;    // max and min values of slider
+  int loose;               // how loose/heavy
+  boolean isOver;            // True if hovering over the scrollbar
+  boolean locked;          // True if a mouse button is pressed while on the scrollbar
+  color barOutlineCol;
+  color barFillCol;
+  color barHoverCol;
+  color sliderFillCol;
+  color sliderPressCol;
+
+  VScrollbar (int X_start, int Y_start, int bar_width, int bar_height, int loosiness,
+              color bar_outline, color bar_background, color slider_bg, color barHover, color slider_press) {
+    barWidth = bar_width;
+    barHeight = bar_height;
+    Xpos = X_start;
+    Ypos = Y_start;
+    Spos = Ypos + barHeight/2 - barWidth/2; // center it initially
+    newSpos = Spos;
+    SposMin = Ypos;
+    SposMax = Ypos + barHeight - barWidth;
+    loose = loosiness;
+    if (loose < 1) loose = 1;
+    barOutlineCol  = bar_outline;
+    barFillCol     = bar_background;
+    sliderFillCol  = slider_bg;
+    barHoverCol    = barHover;
+    sliderPressCol = slider_press;
+  }
+
+  void update() {
+    isOver = over();
+    if(mousePressed && isOver) locked = true; else locked = false;
+
+    if(locked) {
+      newSpos = constrain(mouseY-barWidth/2, SposMin, SposMax);
+    }
+    if(abs(newSpos - Spos) > 0) {
+      Spos = Spos + (newSpos-Spos)/loose;
+    }
+  }
+
+  int constrain(int val, int minv, int maxv) {
+    return min(max(val, minv), maxv);
+  }
+
+  boolean over() {
+    if(mouseX > Xpos && mouseX < Xpos+barWidth &&
+    mouseY > Ypos && mouseY < Ypos+barHeight) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  
+  void display() {
+    stroke(barOutlineCol);
+    fill(barFillCol);
+    rect(Xpos, Ypos, barWidth, barHeight);
+    if(isOver) {
+      fill(barHoverCol);
+    } 
+    if (locked) {
+      fill(sliderPressCol);
+    }
+    if (!isOver && !locked) {
+      fill (sliderFillCol);
+    }
+    if (abs(Spos-newSpos)>0.1) fill (sliderPressCol);
+    rect(Xpos, Spos, barWidth, barWidth);
+  }
+
+  float value() {
+    // Convert slider position Spos to a value between 0 and 1
+    return (Spos-Ypos) / (barHeight-barWidth);
+  }
+  
+  void setValue(float value) {
+    // convert a value (0 to 1) to slider position Spos
+    if (value<0) value=0;
+    if (value>1) value=1;
+    Spos = Ypos + ((barHeight-barWidth)*value);
+    newSpos = Spos;
+  }
+}
 class Sidebar {
   
   int w = offset + 100; 
