@@ -2,6 +2,7 @@
 /* @pjs preload="tsmmlogo.png"; */
 /* @pjs preload="tswhatis.png"; */
 
+boolean isJS = "true"; 
 
 PImage movementMap;
 PImage tsmmlogo; 
@@ -12,6 +13,7 @@ int cur;
 MercatorMap mercatorMap;
 Sidebar sidebar; 
 VScrollbar Vslider;
+float newPos; 
 int regionTotalNum;
 
 int numRegions = 5; 
@@ -88,7 +90,7 @@ void draw() {
   markCurrent();
   sidebar.display(); 
   pushMatrix(); 
-  float newPos= map (Vslider.value(), 0, 1, 0, -(regionTotalNum*30-height)); 
+  newPos= map (Vslider.value(), 0, 1, 0, -(regionTotalNum*30-height)); 
   regions[cur].setOffset(newPos);
   translate (0, newPos); 
   showCurRegion();
@@ -102,6 +104,12 @@ void mousePressed() {
     for (int i = 0; i < regions.length; i++) {
       regions[i].checkClicks();
     }
+}
+
+void mouseScrolled() {
+  if (isJS) newPos += mouseScroll*10; 
+  newPos = constrain (newPos, -(regionTotalNum*30-height), 0); 
+  Vslider.setValue (map (newPos, 0, -(regionTotalNum*30-height), 0, 1 ));
 }
 
 
@@ -129,11 +137,6 @@ void markCurrent() {
   } 
 
    }
-}
-
-
-void mouseScrolled() {
-  println (p.mouseScroll); 
 }
 
 
