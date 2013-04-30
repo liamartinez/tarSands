@@ -2,13 +2,13 @@
 /* @pjs preload="tsmmlogo.png"; */
 /* @pjs preload="tswhatis.png"; */
 
-boolean isJS = "true"; 
 
 PImage movementMap;
 PImage tsmmlogo; 
 PImage tswhatis;
 int curCity, lastCity; 
-int cur; 
+int cur;
+boolean clicked = false;
 
 MercatorMap mercatorMap;
 Sidebar sidebar; 
@@ -21,8 +21,9 @@ Region [] regions = new Region [numRegions];
 String[] regionNames = {
   "Western Canada", "Eastern Canada", "Western USA", "Eastern USA", "Europe"
 }; 
+Button [] buttons = new Button [numRegions]; 
 
-int offset = 200; //todo
+String curTitle = ""; 
 
 //colors
 color yellow = #FFC906; 
@@ -36,19 +37,43 @@ color[] colors = {
 
 color TSblack = #151515; 
 color TSSorange = #F58434;
+color white = color (255); 
 
 String currentRegion; 
 
+//positions
+int offset = 200; //todo
+int regionsX = 100; 
+int regionsY = 200; 
+int mapBorder = 700; //hack to distinguish between map/ buttons
+
+//sizes
+int scrollWidth = 15; 
+int rectW = 300; 
+int rectH = 50; 
+int rectHDetail = 80; 
+
 void setup() {
   frameRate (40); 
+  smooth(); 
+
   for (int i = 0; i< regions.length;i++) {
     regions[i] = new Region();
     regions[i].name = regionNames[i];
+    buttons[i] = new Button (regionNames[i]);
   } 
+
+  //buttons positions
+  buttons[0].set (700, 10, 150, 35); 
+  buttons[1].set (700, 10 + 1*35, 150, 35); 
+  buttons[2].set (700, 10 + 2*35, 150, 35); 
+  buttons[3].set (700 + 150, 10, 150, 35); 
+  buttons[4].set (700 + 150, 10 + 1*35, 150, 35); 
+
   movementMap   = loadImage("map.png");
   tsmmlogo = loadImage ("tsmmlogo.png"); 
   tswhatis = loadImage ("tswhatis.png"); 
-  size (1000, 392); //manual entry 
+  size (1000, 500); 
   mercatorMap = new MercatorMap(900, 392, 60.9304, -3.5134, -171.5625, 14.0625);
   //-171.5625,-3.5134,14.0625,60.9304
   //last one, second one, first one, third one
@@ -60,24 +85,36 @@ void setup() {
   color sliderColor = color(0, 150, 200);
   color scrHoverCol = color(100, 200, 200);
   color scrPressCol = color(100, 255, 255);
-  Vslider = new VScrollbar(width - 15, 0, 15, height, 2, scrEdgdeCol, scrBgCol, sliderColor, scrHoverCol, scrPressCol);
+  Vslider = new VScrollbar(width - scrollWidth, regionsY, scrollWidth, height - regionsY, 1, scrEdgdeCol, scrBgCol, sliderColor, scrHoverCol, scrPressCol);
   Vslider.setValue (0); 
+
   loadCSV("MovementMapData - Sheet1 (5).csv");
+
+  // set the rect sizes after the csv has been loaded
+  for (int i = 0; i< regions.length;i++) {
+    for (int j = 0; j < regions[i].orgList.size(); j++) {
+      Org o = (Org) regions[i].orgList.get(j); 
+      o.setRectSize( rectW, rectH, rectHDetail, scrollWidth); //
+    }
+  }
 }
 
 
 void draw() {
+  background (0); 
+
   //map
   pushMatrix();
-  translate (-offset, 0); 
+  translate (-offset, 150); 
 
   image (movementMap, 0, 0);  
   pushMatrix(); 
-  scale (.6); 
-  image (tsmmlogo, offset+150, height - 50); 
-  image (tswhatis, offset + 470, height + 40); 
+  scale (.5); 
+  image (tsmmlogo, offset+230, -290); 
+  image (tswhatis, offset+530, -290); 
   popMatrix(); 
 
+  //ellipses
   for (int i = 0; i < regions.length; i++) {
     for (int j = 0; j < regions[i].orgList.size(); j++) {
       regions[i].displayCities();
@@ -86,92 +123,120 @@ void draw() {
 
   popMatrix();
 
-  //sidebar
-  markCurrent();
+  //sidebar and slider
+
   sidebar.display(); 
   pushMatrix(); 
-  newPos= map (Vslider.value(), 0, 1, 0, -(regionTotalNum*30-height)); 
-  regions[cur].setOffset(newPos);
-  translate (0, newPos); 
-  showCurRegion();
+  newPos= map (Vslider.value(), 0, 1, 0, -(regionTotalNum*50-height)); 
+  regions[cur].setOffset(regionsY, newPos); //enables click functionality after translate
+  translate (regionsX, newPos + regionsY); 
+  if (clicked) showCurRegion();
   popMatrix(); 
 
+  if (regionTotalNum > 6) {
   Vslider.display(); 
+  } else {
+    Vslider.setValue(0); 
+  }
+
   Vslider.update();
+  //menu
+  fill (TSblack); 
+  rect (700, 0, width - regionsX, regionsY); 
+  for (int i = 0; i < regions.length; i++) {
+    buttons[i].display();
+  }
+
+  //title
+  pushMatrix(); 
+  translate (700, 150); 
+  if (clicked) drawTitleText (regions[cur].name); 
+  else drawTitleText(""); 
+  popMatrix();
 }
 
 void mousePressed() {
-    for (int i = 0; i < regions.length; i++) {
-      regions[i].checkClicks();
-    }
+  if (mouseX < mapBorder)  markCurrent();
+
+  if (mouseX > mapBorder && mouseY < 150) markButton();       
+
+
+  for (int i = 0; i < regions.length; i++) {
+    regions[i].checkClicks();
+  }
 }
 
 void mouseScrolled() {
-  if (isJS) newPos += mouseScroll*10; 
-  newPos = constrain (newPos, -(regionTotalNum*30-height), 0); 
-  Vslider.setValue (map (newPos, 0, -(regionTotalNum*30-height), 0, 1 ));
+  newPos += mouseScroll*10; 
+  newPos = constrain (newPos, -(regionTotalNum*50-height), 0); 
+  Vslider.setValue (map (newPos, 0, -(regionTotalNum*50-height), 0, 1 ));
 }
 
 
 boolean isOverAnOrg() {
   for (int j = 0; j < regions.length; j++) {
-      if (regions[j].isOverAnOrg()) {
-        return true;
-      }
+    if (regions[j].isOverAnOrg()) {
+      return true;
     }
+  }
   return false;
 }
 
 
-void markCurrent() {
-    if (isOverAnOrg()) {
+void markButton() {
   for (int i = 0; i < regions.length; i++) {
-    if (regions[i].isOverAnOrg()) {
+    if (buttons[i].setRegion()) {
       currentRegion = regions[i].name;      
       regions[i].setIsCurrent(true);
-      cur = i; 
+      cur = i;
     } 
     else {
       regions[i].setIsCurrent(false);
     }
-  } 
-
-   }
+  }
+  clicked = true;
 }
 
 
-/*
-  void showCurOrgs() {
- int count = 0; 
- String curCityName = ""; 
- for (int i = 0; i < orgList.size(); i++) {
- Org o = (Org) orgList.get(i); 
- if (o.isCurrent) {
- curCityName = o.city; 
- count ++; 
- fill (255); 
- text (o.name, width-sidebar.w + 10, 40 + (30 * count));   
- 
- strokeWeight (3);
- stroke (TSSorange);  
- line (width-sidebar.w, 40, width - 10, 40);
- } 
- else {
- }
- }
- text (curCityName, width-sidebar.w + 10, 30);
- }
- */
+void markCurrent() {
+  if (isOverAnOrg()) {
+    for (int i = 0; i < regions.length; i++) {
+      if (regions[i].isOverAnOrg()) {
+        currentRegion = regions[i].name;      
+        regions[i].setIsCurrent(true);
+        cur = i;
+      } 
+      else {
+        regions[i].setIsCurrent(false);
+      }
+    }
+  }
+  clicked = true;
+}
+
 
 void showCurRegion() {
+  /*
   for (int i = 0; i < regions.length; i++) {
     if (regions[i].isCurrent) {
       regions[i].displayOrgs();
       regionTotalNum = regions[i].orgList.size();
     }
   }
+  */
+  regions[cur].displayOrgs(); 
+  regionTotalNum = regions[cur].orgList.size();
+  
 }
 
+void drawTitleText (String title_) {
+  stroke (255); 
+  fill (255); 
+  rect (0, 0, 200, 50);  
+  fill (0); 
+  text (title_, 10, 22); 
+  noStroke();
+}
 
 void loadCSV(String fileName) {
   String [] file = loadStrings(fileName); 
@@ -189,6 +254,57 @@ void loadCSV(String fileName) {
   }
   for (int i = 0; i < regions.length; i++) {
     //println (regions[i].name + " " + regions[i].orgList.size());
+  }
+}
+
+class Button {
+
+  int xLoc, yLoc, w, h; 
+  String regionName; 
+  boolean isCurrent = false;
+
+  Button(String name_) {
+    regionName = name_; 
+
+  }
+  
+  void set (int xLoc_, int yLoc_, int w_, int h_) {
+    xLoc = xLoc_; 
+    yLoc = yLoc_; 
+    w = w_; 
+    h = h_;
+  }
+
+
+  void display() {
+    color BG;
+    color FG; 
+    stroke (white);
+    if (isCurrent) {
+      BG = white; 
+      FG = TSblack; 
+    } 
+    else {
+      BG = TSblack; 
+      FG = white; 
+    }
+    fill (BG); 
+    rect (xLoc, yLoc, w, h); 
+    textSize (18); 
+    fill (FG); 
+    text (regionName, xLoc + 10, yLoc + 22);
+    noStroke();
+  }
+
+  boolean setRegion () {
+    if (mouseX > xLoc && mouseX < xLoc + w && mouseY > yLoc && mouseY < yLoc + h) {
+      isCurrent = true; 
+      return true;
+    } 
+    else {
+      isCurrent = false; 
+      return false;
+    }
   }
 }
 
@@ -289,7 +405,7 @@ class Org {
   float circleS; 
   float rate; 
   boolean isCurrent; 
-  int   area = 5; 
+  int   area = 40; 
 
   color myColor; 
   String name; 
@@ -300,8 +416,8 @@ class Org {
   String city; 
   String region; 
   
-  int rectHeight = 30;
-  int rectWidth = offset + 100;
+  int rectHeight, rectHeightDeet, defHeight;
+  int rectWidth, scrollW;
   int yPos; 
   
   boolean isDetail = false;
@@ -337,23 +453,31 @@ class Org {
     ellipse (location.x, location.y, 5, 5);
   }
   
+  void setRectSize (int width_, int defHeight_, int heightDeet_, int scrollW_) {
+    rectWidth =  width_; 
+    defHeight = defHeight_; 
+    rectHeightDeet = heightDeet_; 
+    scrollW = scrollW_; 
+  }
     
   void drawRect(int yPos_) {
       yPos = yPos_; 
       fill (myColor); 
       if (isDetail) {
-        rectHeight = 60; 
+        rectHeight = rectHeightDeet; 
       } else {
-        rectHeight = 30;
+        rectHeight = defHeight;
       }
-      rect (width-rectWidth, yPos, rectWidth, rectHeight); 
+      rect (width-rectWidth - scrollW, yPos, rectWidth, rectHeight); 
       fill (255); 
-      text (name, width-sidebar.w + 10, 10 + yPos);
+      textSize (13); 
+      text (name, width-rectWidth-scrollW + 10, 20 + yPos);
   }
   
-  boolean clickedRect (float offset_) {
+  boolean clickedRect (float offsetY_, float offset_) {
     float clickOffset = offset_; 
-    if (mousePressed && mouseX > (width-rectWidth)  && mouseX < (width-rectWidth + rectWidth)  && mouseY > yPos + clickOffset && mouseY < (yPos + rectHeight)+ clickOffset) {
+    float clickOffsetY = offsetY_; 
+    if (mouseX > (width-rectWidth)  && mouseX < (width-scrollW)  && mouseY > yPos + clickOffset + clickOffsetY && mouseY < (yPos + rectHeight)+ clickOffset + clickOffsetY) {
       return true; 
     } 
     return false;
@@ -365,7 +489,7 @@ class Org {
   }
 
   boolean isInside (int x, int y) {
-    if (dist (x+offset, y, location.x, location.y) < area) {
+    if (dist (x+offset, y - 150, location.x, location.y) < area) {
       return true;
     } 
     else {
@@ -380,7 +504,7 @@ class Region {
   boolean isCurrent; 
 
   int totalHeight;
-  float offset; 
+  float offset, offsetY; //offset from one of the regions growing larger, and offset from translating down
 
   Region() {
     orgList = new ArrayList();
@@ -389,7 +513,7 @@ class Region {
   boolean isOverAnOrg() {
     for (int i = 0; i < orgList.size(); i++) {
       Org o = (Org) orgList.get(i); 
-      if (o.isInside (mouseX, mouseY)) {
+      if (o.isInside (mouseX, mouseY) && mousePressed) {
         return true;
       }
     }
@@ -421,14 +545,15 @@ class Region {
     for (int i = 0; i < orgList.size(); i++) {
       Org o = (Org) orgList.get(i); 
       o.isDetail = false;
-      if (o.clickedRect(offset)) {
+      if (o.clickedRect(offsetY, offset)) {
         o.isDetail = true;
       }
     }
   }
 
-  void setOffset(float offset_) {
+  void setOffset(float offsetY_, float offset_) {
     offset = offset_;
+    offsetY = offsetY_; 
   }
 
   void setIsCurrent(boolean is) {
@@ -549,4 +674,18 @@ class Sidebar {
   }
   
 }
+/*
+
+size
+logos
+description
+preloading
+
+2 cities in the same region
+
+fix org size
+
+make the menu a box so it can detect where the mouse is and draw a neat rect below it
+
+*/
 

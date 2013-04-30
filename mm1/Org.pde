@@ -4,7 +4,7 @@ class Org {
   float circleS; 
   float rate; 
   boolean isCurrent; 
-  int   area = 5; 
+  int   area = 40; 
 
   color myColor; 
   String name; 
@@ -15,8 +15,8 @@ class Org {
   String city; 
   String region; 
   
-  int rectHeight = 30;
-  int rectWidth = offset + 100;
+  int rectHeight, rectHeightDeet, defHeight;
+  int rectWidth, scrollW;
   int yPos; 
   
   boolean isDetail = false;
@@ -52,23 +52,31 @@ class Org {
     ellipse (location.x, location.y, 5, 5);
   }
   
+  void setRectSize (int width_, int defHeight_, int heightDeet_, int scrollW_) {
+    rectWidth =  width_; 
+    defHeight = defHeight_; 
+    rectHeightDeet = heightDeet_; 
+    scrollW = scrollW_; 
+  }
     
   void drawRect(int yPos_) {
       yPos = yPos_; 
       fill (myColor); 
       if (isDetail) {
-        rectHeight = 60; 
+        rectHeight = rectHeightDeet; 
       } else {
-        rectHeight = 30;
+        rectHeight = defHeight;
       }
-      rect (width-rectWidth, yPos, rectWidth, rectHeight); 
+      rect (width-rectWidth - scrollW, yPos, rectWidth, rectHeight); 
       fill (255); 
-      text (name, width-sidebar.w + 10, 10 + yPos);
+      textSize (13); 
+      text (name, width-rectWidth-scrollW + 10, 20 + yPos);
   }
   
-  boolean clickedRect (float offset_) {
+  boolean clickedRect (float offsetY_, float offset_) {
     float clickOffset = offset_; 
-    if (mousePressed && mouseX > (width-rectWidth)  && mouseX < (width-rectWidth + rectWidth)  && mouseY > yPos + clickOffset && mouseY < (yPos + rectHeight)+ clickOffset) {
+    float clickOffsetY = offsetY_; 
+    if (mouseX > (width-rectWidth)  && mouseX < (width-scrollW)  && mouseY > yPos + clickOffset + clickOffsetY && mouseY < (yPos + rectHeight)+ clickOffset + clickOffsetY) {
       return true; 
     } 
     return false;
@@ -80,7 +88,7 @@ class Org {
   }
 
   boolean isInside (int x, int y) {
-    if (dist (x+offset, y, location.x, location.y) < area) {
+    if (dist (x+offset, y - 150, location.x, location.y) < area) {
       return true;
     } 
     else {

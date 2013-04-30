@@ -4,7 +4,7 @@ class Region {
   boolean isCurrent; 
 
   int totalHeight;
-  float offset; 
+  float offset, offsetY; //offset from one of the regions growing larger, and offset from translating down
 
   Region() {
     orgList = new ArrayList();
@@ -13,7 +13,7 @@ class Region {
   boolean isOverAnOrg() {
     for (int i = 0; i < orgList.size(); i++) {
       Org o = (Org) orgList.get(i); 
-      if (o.isInside (mouseX, mouseY)) {
+      if (o.isInside (mouseX, mouseY) && mousePressed) {
         return true;
       }
     }
@@ -45,14 +45,15 @@ class Region {
     for (int i = 0; i < orgList.size(); i++) {
       Org o = (Org) orgList.get(i); 
       o.isDetail = false;
-      if (o.clickedRect(offset)) {
+      if (o.clickedRect(offsetY, offset)) {
         o.isDetail = true;
       }
     }
   }
 
-  void setOffset(float offset_) {
+  void setOffset(float offsetY_, float offset_) {
     offset = offset_;
+    offsetY = offsetY_; 
   }
 
   void setIsCurrent(boolean is) {
