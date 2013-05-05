@@ -51,7 +51,7 @@ int mapBorder = 700; //hack to distinguish between map/ buttons
 int scrollWidth = 15; 
 int rectW = 300; 
 int rectH = 50; 
-int rectHDetail = 80; 
+int rectHDetail = 150; 
 
 void setup() {
   frameRate (40); 
@@ -88,7 +88,7 @@ void setup() {
   Vslider = new VScrollbar(width - scrollWidth, regionsY, scrollWidth, height - regionsY, 1, scrEdgdeCol, scrBgCol, sliderColor, scrHoverCol, scrPressCol);
   Vslider.setValue (0); 
 
-  loadCSV("MovementMapData - Sheet1 (5).csv");
+  loadCSV("MovementMapData - Partner Data - pulled into map.tsv");
 
   // set the rect sizes after the csv has been loaded
   for (int i = 0; i< regions.length;i++) {
@@ -133,13 +133,13 @@ void draw() {
   if (clicked) showCurRegion();
   popMatrix(); 
 
-  if (regionTotalNum > 6) {
+  if (regionTotalNum > 6) { //todo
   Vslider.display(); 
   } else {
     Vslider.setValue(0); 
   }
-
   Vslider.update();
+  
   //menu
   fill (TSblack); 
   rect (700, 0, width - regionsX, regionsY); 
@@ -157,9 +157,7 @@ void draw() {
 
 void mousePressed() {
   if (mouseX < mapBorder)  markCurrent();
-
   if (mouseX > mapBorder && mouseY < 150) markButton();       
-
 
   for (int i = 0; i < regions.length; i++) {
     regions[i].checkClicks();
@@ -167,7 +165,7 @@ void mousePressed() {
 }
 
 void mouseScrolled() {
-  newPos += mouseScroll*10; 
+  //newPos += mouseScroll*10; 
   newPos = constrain (newPos, -(regionTotalNum*50-height), 0); 
   Vslider.setValue (map (newPos, 0, -(regionTotalNum*50-height), 0, 1 ));
 }
@@ -214,19 +212,9 @@ void markCurrent() {
   clicked = true;
 }
 
-
 void showCurRegion() {
-  /*
-  for (int i = 0; i < regions.length; i++) {
-    if (regions[i].isCurrent) {
-      regions[i].displayOrgs();
-      regionTotalNum = regions[i].orgList.size();
-    }
-  }
-  */
   regions[cur].displayOrgs(); 
   regionTotalNum = regions[cur].orgList.size();
-  
 }
 
 void drawTitleText (String title_) {
@@ -243,7 +231,7 @@ void loadCSV(String fileName) {
   //println ("file length: " + file.length); 
   for (int i = 1; i < file.length; i++) {
     Org o = new Org(); 
-    o.fromCSV(file[i].split(","));
+    o.fromCSV(file[i].split("\t"));
     for (int j = 0; j < regions.length; j++) {
       if (o.region.contains(regions[j].name)) {
         //println ("this city: " + o.city + " is in region " + o.region); 

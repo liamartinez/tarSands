@@ -133,13 +133,13 @@ void draw() {
   if (clicked) showCurRegion();
   popMatrix(); 
 
-  if (regionTotalNum > 6) {
+  if (regionTotalNum > 6) { //todo
   Vslider.display(); 
   } else {
     Vslider.setValue(0); 
   }
-
   Vslider.update();
+  
   //menu
   fill (TSblack); 
   rect (700, 0, width - regionsX, regionsY); 
@@ -157,9 +157,7 @@ void draw() {
 
 void mousePressed() {
   if (mouseX < mapBorder)  markCurrent();
-
   if (mouseX > mapBorder && mouseY < 150) markButton();       
-
 
   for (int i = 0; i < regions.length; i++) {
     regions[i].checkClicks();
@@ -167,7 +165,7 @@ void mousePressed() {
 }
 
 void mouseScrolled() {
-  newPos += mouseScroll*10; 
+  //newPos += mouseScroll*10; 
   newPos = constrain (newPos, -(regionTotalNum*50-height), 0); 
   Vslider.setValue (map (newPos, 0, -(regionTotalNum*50-height), 0, 1 ));
 }
@@ -214,19 +212,9 @@ void markCurrent() {
   clicked = true;
 }
 
-
 void showCurRegion() {
-  /*
-  for (int i = 0; i < regions.length; i++) {
-    if (regions[i].isCurrent) {
-      regions[i].displayOrgs();
-      regionTotalNum = regions[i].orgList.size();
-    }
-  }
-  */
   regions[cur].displayOrgs(); 
   regionTotalNum = regions[cur].orgList.size();
-  
 }
 
 void drawTitleText (String title_) {
@@ -431,7 +419,7 @@ class Org {
 
   void fromCSV(String[] input) {
     name = input[0]; 
-    //description = input[12];
+    description = input[8];
 
     city = input[1]; 
     region = input[3]; 

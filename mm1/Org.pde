@@ -30,7 +30,7 @@ class Org {
 
   void fromCSV(String[] input) {
     name = input[0]; 
-    //description = input[12];
+    description = input[7];
 
     city = input[1]; 
     region = input[3]; 
@@ -71,6 +71,12 @@ class Org {
       fill (255); 
       textSize (13); 
       text (name, width-rectWidth-scrollW + 10, 20 + yPos);
+      
+      if (isDetail) {
+        textSize (10); 
+        text (description, width-rectWidth-scrollW + 10, 20 + yPos + 30, rectWidth - 120, rectHeight + 50); 
+      }
+      
   }
   
   boolean clickedRect (float offsetY_, float offset_) {
