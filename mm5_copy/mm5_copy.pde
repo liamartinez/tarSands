@@ -58,7 +58,7 @@ Button [] buttons = new Button [numRegions];
 String curTitle = ""; 
 
 color [] colors = { #16422E, #06534A };
-color[] regID = { color (12, 72, 58), color (56, 123, 43), color (0, 154, 102), color (153, 202, 60), color (110, 182, 211) };
+//color[] regID = { color (12, 72, 58), color (56, 123, 43), color (0, 154, 102), color (153, 202, 60), color (110, 182, 211) };
 color TSgrey = #808080; 
 color TSblack = #141414;
 color TSdarkgrey = color (50);
@@ -95,7 +95,7 @@ void setup() {
   for (int i = 0; i< regions.length;i++) {
     regions[i] = new Region();
     regions[i].name = regionNames[i];
-    regions[i].IDcolor = regID[i];
+    //regions[i].IDcolor = regID[i];
     buttons[i] = new Button (regionNamesAb[i]);
     
     buttons[i].setColor( colors[colorCount]);
@@ -112,7 +112,6 @@ void setup() {
   buttons[3].set (433, 5, 569, 40); 
   buttons[4].set (572, 5, 710, 40); 
 
-
   movementMap   = loadImage("map.png");
   //mapLegend = loadImage ("map_transparent_wcolor.png");
   
@@ -121,13 +120,7 @@ void setup() {
   mercatorMap = new MercatorMap(900, 392, 60.9304, -3.5134, -171.5625, 14.0625);
   //-171.5625,-3.5134,14.0625,60.9304
   //last one, second one, first one, third one
-  
-  // Scrollbar/slider colors
-  color scrEdgdeCol = color(0, 0, 0);
-  color scrBgCol    = color(100, 100, 100);
-  color sliderColor = color(0, 150, 200);
-  color scrHoverCol = color(100, 200, 200);
-  color scrPressCol = color(100, 255, 255);
+
   Vslider = new VScrollbar(width - scrollWidth, regionsY, scrollWidth, height - regionsY, 1, TSblack, TSblack, TSdarkgrey, TSdarkgrey, TSdarkgrey);
   Vslider.setValue (0); 
 
@@ -139,7 +132,7 @@ void setup() {
     for (int j = 0; j < regions[i].orgList.size(); j++) {
       Org o = (Org) regions[i].orgList.get(j); 
       o.setRectSize( rectW, rectH, rectHDetail, scrollWidth); //
-      o.regIDcolor = regions[i].IDcolor;
+      //o.regIDcolor = regions[i].IDcolor;
       o.setCoords();
       if (zero) colorCount = 0; 
       else colorCount = 1; 

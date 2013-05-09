@@ -58,7 +58,7 @@ Button [] buttons = new Button [numRegions];
 String curTitle = ""; 
 
 color [] colors = { #16422E, #06534A };
-color[] regID = { color (12, 72, 58), color (56, 123, 43), color (0, 154, 102), color (153, 202, 60), color (110, 182, 211) };
+//color[] regID = { color (12, 72, 58), color (56, 123, 43), color (0, 154, 102), color (153, 202, 60), color (110, 182, 211) };
 color TSgrey = #808080; 
 color TSblack = #141414;
 color TSdarkgrey = color (50);
@@ -95,7 +95,7 @@ void setup() {
   for (int i = 0; i< regions.length;i++) {
     regions[i] = new Region();
     regions[i].name = regionNames[i];
-    regions[i].IDcolor = regID[i];
+    //regions[i].IDcolor = regID[i];
     buttons[i] = new Button (regionNamesAb[i]);
     
     buttons[i].setColor( colors[colorCount]);
@@ -112,7 +112,6 @@ void setup() {
   buttons[3].set (433, 5, 569, 40); 
   buttons[4].set (572, 5, 710, 40); 
 
-
   movementMap   = loadImage("map.png");
   //mapLegend = loadImage ("map_transparent_wcolor.png");
   
@@ -121,13 +120,7 @@ void setup() {
   mercatorMap = new MercatorMap(900, 392, 60.9304, -3.5134, -171.5625, 14.0625);
   //-171.5625,-3.5134,14.0625,60.9304
   //last one, second one, first one, third one
-  
-  // Scrollbar/slider colors
-  color scrEdgdeCol = color(0, 0, 0);
-  color scrBgCol    = color(100, 100, 100);
-  color sliderColor = color(0, 150, 200);
-  color scrHoverCol = color(100, 200, 200);
-  color scrPressCol = color(100, 255, 255);
+
   Vslider = new VScrollbar(width - scrollWidth, regionsY, scrollWidth, height - regionsY, 1, TSblack, TSblack, TSdarkgrey, TSdarkgrey, TSdarkgrey);
   Vslider.setValue (0); 
 
@@ -139,7 +132,7 @@ void setup() {
     for (int j = 0; j < regions[i].orgList.size(); j++) {
       Org o = (Org) regions[i].orgList.get(j); 
       o.setRectSize( rectW, rectH, rectHDetail, scrollWidth); //
-      o.regIDcolor = regions[i].IDcolor;
+      //o.regIDcolor = regions[i].IDcolor;
       o.setCoords();
       if (zero) colorCount = 0; 
       else colorCount = 1; 
@@ -526,7 +519,7 @@ class Org {
 
   boolean isDetail = false;
   boolean oldIsDetail;
-  
+
   int spread, tryCount; 
 
   Org() {
@@ -551,20 +544,23 @@ class Org {
     city = input[1]; 
     region = input[3]; 
     lat = float(input[5]); 
-    lng = float(input[4]); 
+    lng = float(input[4]);
   } 
 
   void display(int circleSize) {
+    int transp; 
+     if (isFirst) transp = 200;
+     else transp = 20;
+     
     if (isCurrent) {
-      fill (TSorange, 30);
+      fill (TSorange, transp);
     } 
     else {
-      fill (myColor, 70);
+      fill (myColor, transp);
     }
     noStroke(); 
     //circleS = circleS + amplitude * cos(TWO_PI * frameCount / period); //for individual pulsing
-    ellipse (randLoc.x, randLoc.y, circleS, circleS);
-    //ellipse (randLoc.x, randLoc.y, 5, 5);
+    ellipse (randLoc.x, randLoc.y, circleS, circleS);  
   }
 
   void setRectSize (int width_, int defHeight_, int heightDeet_, int scrollW_) {
@@ -593,19 +589,12 @@ class Org {
 
     if (isDetail) {
       newHeight = rectHeightDeet;
-      //rectHeight = rectHeightDeet; 
-      //sw = 20;
-      // sw2 = 2;
-      //  if (!isFirst) yPos += 5;
     } 
     else {
       newHeight = defHeight;
-      // rectHeight = defHeight;
-      // sw = 2; 
-      //sw2 = sw;
     }
 
-    float easeHeight = 1.1;
+    float easeHeight = .09;
     boolean go; 
     float sx = newHeight - rectHeight;
 
@@ -633,21 +622,12 @@ class Org {
     textLeading(17); 
     int orgNameX = width-rectWidth-scrollW + 10;
     text (name, orgNameX, 8+ yPos, 150, rectHeight);
-    stroke (TSblack);
-    //strokeWeight (sw);  
-    //line (width-rectWidth - scrollW, yPos + rectHeight, width-rectWidth - scrollW + rectWidth, yPos + rectHeight);
-    //strokeWeight (sw2);
-    //line (width-rectWidth - scrollW, yPos, width-rectWidth - scrollW + rectWidth, yPos);
     noStroke(); 
 
     if (isDetail) {
       if (go) {
         nameX = width - 60;
         nameY = yPos + rectHeight - 20;
-            rectMode (CORNER); 
-    textFont (font, 12); 
-    textLeading (14); 
-    text (description, width-rectWidth-scrollW + 10, 55 + yPos, rectWidth - 130, rectHeight- 60); 
       }
 
       linkLocX = orgNameX; 
@@ -661,6 +641,10 @@ class Org {
         nameY = yPos + rectHeight - 10;
       }
     }
+    rectMode (CORNER); 
+    textFont (font, 12); 
+    textLeading (14); 
+    text (description, width-rectWidth-scrollW + 10, 55 + yPos, rectWidth - 130, rectHeight- 60); 
     textAlign (RIGHT); 
     textFont (font, 12);
     text (city, nameX, nameY); 
@@ -669,7 +653,8 @@ class Org {
     logoLocX = width - 105;
     image (logo, logoLocX, logoLocY);
   }
-
+  
+  
   boolean clickedRect (float offsetY_, float offset_) {
     float clickOffset = offset_; 
     float clickOffsetY = offsetY_; 
@@ -706,36 +691,36 @@ class Org {
     randLoc = new PVector (int(random (location.x - spread, location.x + spread)), int(random (location.y - spread, location.y + spread))); 
     //mapLegend.loadPixels(); 
     //randLoc = location; 
-     /*
+    /*
     randLoc.x = constrain (randLoc.x, 0, mapLegend.width-1); 
-    randLoc.y = constrain (randLoc.y, 0, mapLegend.height-1); 
-    
-   
-    //color thisColor = mapLegend.get (int(randLoc.x), int (randLoc.y)); 
-    color thisColor = mapLegend.pixels [int(randLoc.x) + (int (randLoc.y) * mapLegend.width)]; 
-    println (regIDcolor + " " + thisColor + " here: " + abs (regIDcolor - thisColor));    //color thisColor = 40;
-    if (regIDcolor > (thisColor - 100000) && regIDcolor <( thisColor + 100000)) {
-      //println ("yes match"); 
-      return;
-    } 
-    else {
-      spread +=10;
-      
-      if (tryCount < 10) {
-        tryCount ++;
-      } else {
-        spread +=10;
-        tryCount = 0; 
-      }
-      
-      //println ("spread: " + spread); 
-      if (spread > 100) return;
-      
-      
-      makeLocation();
-    }
-    
-    */
+     randLoc.y = constrain (randLoc.y, 0, mapLegend.height-1); 
+     
+     
+     //color thisColor = mapLegend.get (int(randLoc.x), int (randLoc.y)); 
+     color thisColor = mapLegend.pixels [int(randLoc.x) + (int (randLoc.y) * mapLegend.width)]; 
+     println (regIDcolor + " " + thisColor + " here: " + abs (regIDcolor - thisColor));    //color thisColor = 40;
+     if (regIDcolor > (thisColor - 100000) && regIDcolor <( thisColor + 100000)) {
+     //println ("yes match"); 
+     return;
+     } 
+     else {
+     spread +=10;
+     
+     if (tryCount < 10) {
+     tryCount ++;
+     } else {
+     spread +=10;
+     tryCount = 0; 
+     }
+     
+     //println ("spread: " + spread); 
+     if (spread > 100) return;
+     
+     
+     makeLocation();
+     }
+     
+     */
   }
 
   boolean isInside (int x, int y) {
@@ -803,7 +788,8 @@ class Region {
   void displayCities() {
     for (int i = orgList.size()-1; i > -1; i--) {
       Org o = (Org) orgList.get(i); 
-      o.display( 5 * i);
+            if (i == 0) o.isFirst = true;
+      o.display( 100);
     }
   }
 

@@ -53,7 +53,8 @@ class Region {
   void displayCities() {
     for (int i = orgList.size()-1; i > -1; i--) {
       Org o = (Org) orgList.get(i); 
-      o.display( 5 * i);
+            if (i == 0) o.isFirst = true;
+      o.display( 100);
     }
   }
 
