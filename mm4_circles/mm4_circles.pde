@@ -65,19 +65,25 @@ color yellow = #FFC906;
  color purple = #7E2966;
  color brown = #827561;
  */
+ /*
 color[] colors = {
   #0C483A, #387B2B, #009A66, #A5BC39, #B2A97E, #6DB6D3
 };
+*/
 
+color [] colors = {
+  #16422E, #06534A
+};
 color TSgrey = #808080; 
 color TSblack = #141414;
 color TSdarkgrey = color (50);
-color TSSorange = #F58434;
+color TSorange = #FF8530;
 color white = color (255); 
 
 PFont font, fontBold;
 
 String currentRegion; 
+boolean fromMap = false; 
 
 //positions
 int offset = 180; //todo
@@ -90,7 +96,7 @@ int mapBorder = 40; //hack to distinguish between map/ buttons
 int scrollWidth = 15; 
 int rectW = 300; 
 int rectH = 70; 
-int rectHDetail = 220; 
+int rectHDetail = 240; 
 
 void setup() {
   frameRate (40); 
@@ -99,11 +105,16 @@ void setup() {
   font = createFont("Helvetica", 32);
   fontBold = createFont("Helvetica Bold", 32);
 
+  int colorCount = 0; 
   for (int i = 0; i< regions.length;i++) {
     regions[i] = new Region();
     regions[i].name = regionNames[i];
     buttons[i] = new Button (regionNamesAb[i]);
-    buttons[i].setColor( colors[i]);
+    
+    buttons[i].setColor( colors[colorCount]);
+    regions[i].regColor = colors[colorCount];
+    colorCount++; 
+    if (colorCount >= colors.length ) colorCount = 0; 
   } 
    
 
@@ -133,16 +144,17 @@ void setup() {
   Vslider.setValue (0); 
 
   loadCSV("MovementMapData - Revised Copy of Partner Data - pulled into map.tsv");
-
+  boolean zero = true; 
   // set the rect sizes after the csv has been loaded
   for (int i = 0; i< regions.length;i++) {
-    int colorCount = i+1; //start at the color of the region 
+    
     for (int j = 0; j < regions[i].orgList.size(); j++) {
       Org o = (Org) regions[i].orgList.get(j); 
       o.setRectSize( rectW, rectH, rectHDetail, scrollWidth); //
+      if (zero) colorCount = 0; 
+      else colorCount = 1; 
       o.setColor (colors[colorCount]); 
-      if (colorCount >= colors.length-1) colorCount = 0; 
-      else colorCount++;
+      zero = !zero; 
     }
   }
 
@@ -228,7 +240,7 @@ void mousePressed() {
   
   //println ("mouseX: " + mouseX + " mouseY: " + mouseY);
   int orgLinked = regions[cur].checkLogos();
-  if (orgLinked !=null) goToLink(orgLinked); 
+  if (orgLinked != -1) goToLink(orgLinked);   
 }
 
 void mouseScrolled() {
@@ -263,9 +275,10 @@ void markButton() {
   //regions[i].loc = 0; 
   regions[cur].totalHeight = 0;
   //regions[cur].yPos = -500;
+  fromMap = false; 
 }
 
-
+/* //returns a region
 void markCurrent() {
   //if (isOverAnOrg()) {
   for (int i = 0; i < regions.length; i++) {
@@ -284,17 +297,40 @@ void markCurrent() {
   regions[cur].totalHeight = 0; 
  // regions[cur].yPos = -500; 
   clicked = true;
+}*/
+
+void markCurrent() {
+  //if (isOverAnOrg()) {
+  for (int i = 0; i < regions.length; i++) {
+    if (regions[i].isOverAnOrg()) {
+      cur = i;
+    } 
+    else {
+      regions[i].setIsCurrent(false);
+      buttons[i].setIsCurrent(false);
+    }
+  }
+  // }
+  currentRegion = regions[cur].name;      
+  regions[cur].setIsCurrent(true);
+  regions[cur].setOneCurrent(regions[cur].getCurOrg());
+  buttons[cur].setIsCurrent(true);
+  regions[cur].totalHeight = 0; 
+ // regions[cur].yPos = -500; 
+  clicked = true;
+  fromMap = true; 
 }
 
 void showCurRegion() {
-  regions[cur].displayOrgs(); 
+  if (!fromMap) regions[cur].displayOrgs();  
+  else regions[cur].displayOneOrg(regions[cur].getCurOrg());  
   regionTotalNum = regions[cur].orgList.size();
 }
 
 void drawTitleText (String title_) {
-  fill (colors[cur]); 
+  fill (regions[cur].regColor); 
   rect (0, 0, rectW, 35);  
-  fill (0); 
+  fill (white); 
   textFont (fontBold, 18); 
   text (title_, 10, 25); 
   noStroke();

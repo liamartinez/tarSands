@@ -23,7 +23,8 @@ class Org {
   int rectHeight, newHeight, rectHeightDeet, defHeight;
   int rectWidth, scrollW;
   float yPos, newPos; 
-  int logoLocX, logoLocY; 
+  float logoLocX, logoLocY; 
+  float linkLocX, linkLocY; 
 
   boolean isDetail = false;
   boolean oldIsDetail;
@@ -56,7 +57,7 @@ class Org {
 
   void display(int circleSize) {
     if (isCurrent) {
-      fill (255, 30);
+      fill (TSorange, 30);
     } 
     else {
       fill (myColor, 70);
@@ -80,7 +81,8 @@ class Org {
 
   void drawRect(float newPos_) {
     int sw, sw2; 
-    float nameX, nameY; 
+    float nameX = 0; 
+    float nameY = 0; 
     newPos = newPos_;
     //yPos = yPos_; 
     float easing = 0.09;
@@ -105,7 +107,7 @@ class Org {
     }
 
     float easeHeight = .09;
-    float go; 
+    boolean go; 
     float sx = newHeight - rectHeight;
 
     if (abs(sx) > 1) {
@@ -124,11 +126,12 @@ class Org {
     }
      fill (myColor); 
     rect (width-rectWidth - scrollW, yPos, rectWidth, rectHeight); 
-    fill (TSblack); 
+    fill (white); 
     textFont (fontBold, 15);
     rectMode (CORNER); 
     textLeading(17); 
-    text (name, width-rectWidth-scrollW + 10, 8+ yPos, 150, rectHeight);
+    int orgNameX = width-rectWidth-scrollW + 10;
+    text (name,orgNameX , 8+ yPos, 150, rectHeight);
     stroke (TSblack);
     //strokeWeight (sw);  
     //line (width-rectWidth - scrollW, yPos + rectHeight, width-rectWidth - scrollW + rectWidth, yPos + rectHeight);
@@ -160,12 +163,16 @@ class Org {
     logoLocY =  (int)yPos + 10;
     logoLocX = width - 105;
     image (logo, logoLocX, logoLocY);
+    linkLocX = orgNameX; 
+    linkLocY = nameY; 
+    textFont (fontBold, 10); 
+    text ("WEBSITE", linkLocX, linkLocY); 
   }
 
   boolean clickedRect (float offsetY_, float offset_) {
     float clickOffset = offset_; 
     float clickOffsetY = offsetY_; 
-    if (mouseX > (width-rectWidth)  && mouseX < (width-scrollW-logo.width)  && mouseY > yPos + clickOffset + clickOffsetY && mouseY < (yPos + rectHeight)+ clickOffset + clickOffsetY) {
+    if (mouseX > (width-rectWidth)  && mouseX < (width-scrollW-logo.width)  && mouseY > yPos + clickOffset + clickOffsetY && mouseY < (yPos + rectHeight)+ clickOffset + clickOffsetY - rectHeight/3) {
       return true;
     } 
     return false;
@@ -174,9 +181,14 @@ class Org {
     boolean clickedLogo (float offsetY_, float offset_) {
         float clickOffset = offset_; 
     float clickOffsetY = offsetY_; 
-    //rect (logoLocX, logoLocY, logoLocX + 105, logo.height); 
+    
+    /*
     if (mouseX > logoLocX &&  mouseY > logoLocY + clickOffsetY + clickOffset && mouseY < logoLocY + logo.height + clickOffset + clickOffsetY) {
       return true;
+    }  */
+
+    if (mouseX > linkLocX &&  mouseX < linkLocX + 100 && mouseY > linkLocY - 15 + clickOffsetY + clickOffset && mouseY < linkLocY  + clickOffset + clickOffsetY) {
+      return true; 
     }
     return false;
   }
@@ -189,12 +201,12 @@ class Org {
 
   void makeLocation() {
     PVector newLoc; 
-    randLoc = new PVector (int(random (location.x - 15, location.x + 15)), int(random (location.y - 15, location.y + 15))); 
+    randLoc = new PVector (int(random (location.x - 35, location.x + 35)), int(random (location.y - 35, location.y + 35))); 
     movementMap.loadPixels(); 
     randLoc.x = constrain (randLoc.x, 0, movementMap.width-1); 
     randLoc.y = constrain (randLoc.y, 0, movementMap.height-1); 
     color thisColor = movementMap.pixels[int(randLoc.x+movementMap.width*randLoc.y)]; 
-    if (brightness (thisColor) < 50 || randLoc.x > 100 || randLoc.x < movementMap.width -100 || randLoc.y > 10 || randLoc.y < movementMap.height - 100) {
+    if (brightness (thisColor) < 5)  {
       return;
     } 
     else {

@@ -2,7 +2,9 @@ class Region {
   ArrayList orgList; 
   String name;
   boolean isCurrent; 
-
+  int curOrg; 
+  color regColor; 
+  
   int totalHeight;
   float offset, offsetY; //offset from one of the regions growing larger, and offset from translating down
 
@@ -16,30 +18,35 @@ class Region {
     for (int i = 0; i < orgList.size(); i++) {
       Org o = (Org) orgList.get(i); 
       if (o.isInside (mouseX, mouseY) && mousePressed) {
+        curOrg = i; 
         return true;
       }
     }
     return false;
   }
-  
+
+  int getCurOrg() {
+    return curOrg;
+  }
+
   int checkLogos() {
-        for (int i = 0; i < orgList.size(); i++) {
+    for (int i = 0; i < orgList.size(); i++) {
       Org o = (Org) orgList.get(i); 
       if (o.clickedLogo (offsetY, offset) && mousePressed) {
         return i;
       }
     }
-    return null;
+    return -1;
   }
-  
-    boolean checkHover() {
-        for (int i = 0; i < orgList.size(); i++) {
+
+  boolean checkHover() {
+    for (int i = 0; i < orgList.size(); i++) {
       Org o = (Org) orgList.get(i); 
       if (o.clickedLogo (offsetY, offset)) {
-        return true; 
-      } 
+        return true;
+      }
     }
-   return false; 
+    return false;
   }
 
   void displayCities() {
@@ -54,7 +61,7 @@ class Region {
       Org o = (Org) orgList.get(i); 
       if (i == 0) {
         totalHeight = 0;
-        o.isFirst = true; 
+        o.isFirst = true;
       } 
       else { 
         Org u  = (Org) orgList.get(i-1); 
@@ -63,7 +70,24 @@ class Region {
       if (i == orgList.size() -1) o.isLast = true; 
       o.drawRect(totalHeight);
     }
+  }
 
+  void displayOneOrg(int whichOrg) {
+    Org o = (Org) orgList.get(whichOrg); 
+    totalHeight = 0;
+    o.isFirst = true; 
+    o.isLast = true;
+    o.drawRect (totalHeight);
+  }
+
+  void setOneCurrent (int whichOrg) {
+    for (int i = 0; i < orgList.size(); i++) {
+      Org o = (Org) orgList.get(i); 
+      o.isCurrent = false;
+    }
+
+    Org oh = (Org) orgList.get(whichOrg);
+    oh.isCurrent = true;
   }
 
   void checkClicks() {
@@ -72,7 +96,7 @@ class Region {
       o.isDetail = false;
       if (o.clickedRect(offsetY, offset)) {
         o.isDetail = !o.oldIsDetail; 
-        o.oldIsDetail = o.isDetail; 
+        o.oldIsDetail = o.isDetail;
       }
     }
   }
@@ -84,14 +108,13 @@ class Region {
 
   void setIsCurrent(boolean is) {
     isCurrent = is; 
-    
+
     for (int i = 0; i < orgList.size(); i++) {
       Org o = (Org) orgList.get(i); 
       //o.isDetail = false;
       o.isCurrent = is; 
-      o.yPos = -rectH; 
+      o.yPos = -rectH;
     }
   }
-  
 }
 
